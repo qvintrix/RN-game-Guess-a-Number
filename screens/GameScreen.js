@@ -1,5 +1,13 @@
 import React, {useState, useRef, useEffect} from 'react';
-import {View, StyleSheet, Text, Button, Alert, ScrollView} from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  Button,
+  Alert,
+  ScrollView,
+  Dimensions,
+} from 'react-native';
 import NumberContainer from '../components/NumberContainer';
 import Card from '../components/Card';
 
@@ -28,6 +36,22 @@ const GameScreen = props => {
   const [currentGuess, setCurrentGuess] = useState(initialGuess);
 
   const [pastGuesses, setPastGuesses] = useState([initialGuess]);
+  const [avalableDeviceWidth, setAvalableDeviceWidth] = useState(
+    Dimensions.get('window').width,
+  );
+
+  const [avalableDeviceHeight, setAvalableDeviceHeight] = useState(
+    Dimensions.get('window').height,
+  );
+
+  useEffect(() => {
+    const updateLayout = () => {
+      setAvalableDeviceWidth(Dimensions.get('window').width);
+      setAvalableDeviceHeight(Dimensions.get('window').height);
+    };
+    Dimensions.addEventListener('change', updateLayout);
+    return Dimensions.removeEventListener('change', updateLayout);
+  });
   const currentLow = useRef(1);
   const currentHigh = useRef(100);
 
@@ -63,11 +87,42 @@ const GameScreen = props => {
     // setRounds(curRounds => curRounds + 1);
     setPastGuesses(curPastGuesses => [nextNumber, ...curPastGuesses]);
   };
+
+  if (avalableDeviceHeight < 500) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.headerTitle}>Opponent's Guess</Text>
+        <View style={styles.controls}>
+          <Button
+            title="Lower"
+            onPress={nextGuessHandler.bind(this, 'lower')}
+          />
+          <NumberContainer>{currentGuess}</NumberContainer>
+          <Button
+            title="Greater"
+            onPress={nextGuessHandler.bind(this, 'greater')}
+          />
+        </View>
+        <View style={styles.list}>
+          <ScrollView>
+            {pastGuesses.map((guess, i) =>
+              renderListItem(guess, pastGuesses.length - i),
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={styles.screen}>
       <Text style={styles.headerTitle}>Opponent's Guess</Text>
       <NumberContainer>{currentGuess}</NumberContainer>
-      <Card style={styles.buttonContainer}>
+      <Card
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{
+          ...styles.buttonContainer,
+          marginTop: avalableDeviceHeight > 600 ? 20 : 5,
+        }}>
         <Button title="Lower" onPress={nextGuessHandler.bind(this, 'lower')} />
         <Button
           title="Greater"
@@ -94,9 +149,14 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    margin: 20,
-    width: 300,
-    maxWidth: '80%',
+    width: 400,
+    maxWidth: '90%',
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    width: '80%',
   },
   listItem: {
     borderColor: '#ccc',
